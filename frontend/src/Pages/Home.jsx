@@ -1,4 +1,5 @@
 //import Navbar from "../components/Navbar";
+import { Link } from "react-router-dom";
 import CategorySection from "../components/CategorySection";
 import FeaturedProducts from "../components/FeaturedProducts";
 import Cart from "../components/Cart";
@@ -19,7 +20,9 @@ function Home() {
               Find amazing products at great prices.
             </p>
   
-            <a href="/products">Shop Now</a>
+            <Link to="/products" className="shop-now-button">
+              Shop Now
+            </Link>
           </div>
   
           <div className="hero-image">

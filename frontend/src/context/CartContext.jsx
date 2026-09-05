@@ -95,7 +95,9 @@ export function CartProvider({ children }) {
       total + item.quantity,
     0
   );
-
+  function clearCart() {
+    setCart([]);
+  }
   // PLACE ORDER
   function placeOrder(customerDetails) {
     const order = {
@@ -128,10 +130,13 @@ export function CartProvider({ children }) {
         cartTotal,
         cartCount,
         placeOrder,
+        clearCart,
       }}
     >
       {children}
+      
     </CartContext.Provider>
+    
   );
 }
 

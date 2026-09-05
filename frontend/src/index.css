@@ -112,7 +112,7 @@
   
   .category-card {
     padding: 30px;
-    border: 1px solid #ddd;
+    /* border: 1px solid #ddd; */
     border-radius: 10px;
     cursor: pointer;
   }
@@ -597,4 +597,21 @@ input[type=submit]:hover {
 .cart-page h1 {
   padding-top: 5%;
     margin-top: 0;
+}
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+}
+
+.footer {
+  margin-top: 5%;
+  padding: 3px;
+  text-align: center;
+  background: #222;
+  color: white;
 }

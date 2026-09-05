@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
 
 function Checkout() {
-  const { cart, cartTotal, placeOrder } = useCart();
+  const { cart, cartTotal, clearCart  } = useCart();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -26,14 +26,46 @@ function Checkout() {
     });
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
   
-    const order = placeOrder(formData);
+    try {
+      const savedUser = JSON.parse(localStorage.getItem("user"));
   
-    console.log("ORDER CREATED:", order);
+      const response = await fetch("http://localhost:5000/api/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          customer: formData,
+          products: cart,
+          total: cartTotal,
+          userId: savedUser?.id || null,
+        }),
+      });
   
-    navigate(`/order-success/${order.id}`);
+      const data = await response.json();
+  
+      console.log("ORDER RESPONSE:", data);
+  
+      if (!response.ok) {
+        alert(data.message);
+        return;
+      }
+  
+      localStorage.setItem(
+        "lastOrder",
+        JSON.stringify(data.order)
+      );
+  
+      clearCart();
+  
+      navigate(`/order-success/${data.order.id}`);
+    } catch (error) {
+      console.error("Order placement error:", error);
+      alert("Something went wrong while placing the order.");
+    }
   }
 
   if (cart.length === 0) {

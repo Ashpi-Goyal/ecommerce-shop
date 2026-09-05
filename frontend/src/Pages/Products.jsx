@@ -1,23 +1,47 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
+import { useSearchParams } from "react-router-dom";
+
 
 function Products() {
   const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortOption, setSortOption] = useState("default");
   const { addToCart } = useCart();
+  const [searchParams] = useSearchParams();
+  const categoryFromUrl = searchParams.get("category");
+  const [selectedCategory, setSelectedCategory] = useState(
+    categoryFromUrl || "All"
+  );
+  
+  useEffect(() => {
+    setSelectedCategory(categoryFromUrl || "All");
+  }, [categoryFromUrl]);
 
   useEffect(() => {
+    setLoading(true);
+    setError("");
+  
     fetch("http://localhost:5000/api/products")
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Failed to fetch products");
+        }
+  
+        return response.json();
+      })
       .then((data) => {
         console.log("Products:", data);
         setProducts(data);
+        setLoading(false);
       })
       .catch((error) => {
         console.error("Error:", error);
+        setError("Unable to load products. Please try again.");
+        setLoading(false);
       });
   }, []);
 
@@ -59,6 +83,7 @@ function Products() {
         return 0;
     }
     );
+    
 
       <div className="sort-filter">
 
@@ -98,6 +123,22 @@ return (
     <div className="products-page">
   
       <h1>All Products</h1>
+            {loading && (
+        <p className="loading-message">
+            Loading products...
+        </p>
+        )}
+         {error && (
+            <div className="error-message">
+                <p>{error}</p>
+
+                <button
+                onClick={() => window.location.reload()}
+                >
+                Try Again
+                </button>
+            </div>
+            )}
   
       {/* SEARCH */}
   
