@@ -1,8 +1,18 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../AuthContext";
+import { useLocation, useNavigate,} from "react-router-dom";
+import MessageModal from "../components/MessageModal";
 
 function Login() {
+
+  const [messageModal, setMessageModal] = useState({
+      show: false,
+      type: "info",
+      title: "",
+      message: "",
+      redirectTo: null,
+    });
 
     const { login } = useAuth();
 
@@ -10,15 +20,35 @@ function Login() {
         email: "",
         password: "",
     })
+    const navigate = useNavigate();
+    const location = useLocation();
 
-    function handleChange(event) {
-        const { name, value } = event.target;
-    
-        setFormData({
-          ...formData,
-          [name]: value,
-        });
-      }
+    function showMessage(
+      type,
+      title,
+      message,
+      redirectTo = null
+    ) {
+      setMessageModal({
+        show: true,
+        type,
+        title,
+        message,
+        redirectTo,
+      });
+    }
+
+    const redirectPath =
+      location.state?.from || "/";
+
+        function handleChange(event) {
+            const { name, value } = event.target;
+        
+            setFormData({
+              ...formData,
+              [name]: value,
+            });
+          }
 
       async function handleSubmit(event) {
         event.preventDefault();
@@ -40,31 +70,50 @@ function Login() {
       console.log("LOGIN RESPONSE:", data);
 
       if (!response.ok) {
-        alert(data.message);
+        showMessage(
+          "error",
+          "Login Failed",
+          data.message || "Invalid email or password."
+        );
+
         return;
       }
       
-      alert("Login successful!");
-      
       login(data.user);
-      localStorage.setItem("token", data.token);
+
+      localStorage.setItem(
+        "token",
+        data.token
+      );
+      
+      showMessage(
+        "success",
+        "Login Successful",
+        `Welcome back, ${data.user.name}!`,
+        redirectPath
+      );
       
       console.log("LOGGED IN USER:", data.user); 
       console.log("SAVED USER:", localStorage.getItem("user")); 
 
         } catch (error) {
-        console.error("Login error:", error);
-        alert("Something went wrong. Please try again.");
+          console.error("Login error:", error);
+        
+          showMessage(
+            "error",
+            "Login Error",
+            "Something went wrong. Please try again."
+          );
         }
     }
     return (
-        <div className="auth-page">
+        <div className="addproduct-page">
           <div className="auth-card">
             <h1>Login</h1>
     
             <p>Login to continue shopping.</p>
     
-            <form onSubmit={handleSubmit}>
+            <form className="addproduct-form login" onSubmit={handleSubmit}>
               <label>Email</label>
     
               <input
@@ -87,16 +136,50 @@ function Login() {
                 required
               />
     
-              <button type="submit">
+              <p></p>
+              <button className="addproduct-btn" type="submit">
                 Login
               </button>
             </form>
     
-            <p>
+            <p className="gapping-register">
               Don't have an account?{" "}
-              <Link to="/register">Register</Link>
+              <Link
+                  className="addproduct-btn"
+                  to="/register"
+                  state={{
+                    from: redirectPath,
+                  }}
+                >
+                  Register
+                </Link>
+            
             </p>
           </div>
+
+          <MessageModal
+              show={messageModal.show}
+              type={messageModal.type}
+              title={messageModal.title}
+              message={messageModal.message}
+              onClose={() => {
+                const redirectTo = messageModal.redirectTo;
+
+                setMessageModal({
+                  show: false,
+                  type: "info",
+                  title: "",
+                  message: "",
+                  redirectTo: null,
+                });
+
+                if (redirectTo) {
+                  navigate(redirectTo, {
+                    replace: true,
+                  });
+                }
+              }}
+            />
         </div>
       );
     }

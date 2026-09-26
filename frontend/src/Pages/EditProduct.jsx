@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../AuthContext.jsx";
+import MessageModal from "../components/MessageModal.jsx";
 
 function EditProduct() {
   const { user } = useAuth();
@@ -12,6 +13,14 @@ function EditProduct() {
     price: "",
     category: "",
     image: "",
+  });
+
+  const [messageModal, setMessageModal] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    redirectTo: null,
   });
 
   const [loading, setLoading] = useState(true);
@@ -26,7 +35,11 @@ function EditProduct() {
         const data = await response.json();
 
         if (!response.ok) {
-          alert(data.message);
+          showMessage(
+            "error",
+            "Something went wrong",
+            data.message
+          );
           return;
         }
 
@@ -55,6 +68,21 @@ function EditProduct() {
     });
   }
 
+  function showMessage(
+    type,
+    title,
+    message,
+    redirectTo = null
+  ) {
+    setMessageModal({
+      show: true,
+      type,
+      title,
+      message,
+      redirectTo,
+    });
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
 
@@ -74,16 +102,29 @@ function EditProduct() {
       const data = await response.json();
 
       if (!response.ok) {
-        alert(data.message);
+        showMessage(
+          "error",
+          "Update Failed",
+          data.message
+        );
+      
         return;
       }
+      
+      showMessage(
+        "success",
+        "Product Updated",
+        "This product was updated successfully."
+      );
 
-      alert("Product updated successfully");
-
-      navigate("/admin/products");
     } catch (error) {
       console.error("Update product error:", error);
-      alert("Something went wrong");
+    
+      showMessage(
+        "error",
+        "Update Failed",
+        "Something went wrong while updating the product."
+      );
     }
   }
 
@@ -96,10 +137,11 @@ function EditProduct() {
   }
 
   return (
-    <div>
+    <div className="addproduct-page">
       <h1>Edit Product</h1>
 
-      <form onSubmit={handleSubmit}>
+      <form className="addproduct-form" 
+        onSubmit={handleSubmit}>
         <label>Product Name</label>
 
         <input
@@ -112,7 +154,7 @@ function EditProduct() {
 
         <label>Price</label>
 
-        <input
+        <input className="btm-padding"
           type="number"
           name="price"
           value={formData.price}
@@ -140,10 +182,28 @@ function EditProduct() {
           required
         />
 
-        <button type="submit">
+        <button className="addproduct-btn" type="submit">
           Update Product
         </button>
       </form>
+      <MessageModal
+          show={messageModal.show}
+          type={messageModal.type}
+          title={messageModal.title}
+          message={messageModal.message}
+          onClose={() => {
+            const redirectTo = messageModal.redirectTo;
+          
+            setMessageModal({
+              ...messageModal,
+              show: false,
+            });
+          
+            if (redirectTo) {
+              navigate(redirectTo);
+            }
+          }}
+        />
     </div>
   );
 }

@@ -35,16 +35,6 @@
     font-weight: bold;
   }
   
-  .nav-links {
-    display: flex;
-    gap: 30px;
-  }
-  
-  .nav-links a {
-    text-decoration: none;
-    color: #333;
-  }
-  
   .cartlayout {
     text-decoration: none;
   }

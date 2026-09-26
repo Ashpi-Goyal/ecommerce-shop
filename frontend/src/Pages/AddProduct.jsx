@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext.jsx";
+import MessageModal from "../components/MessageModal.jsx";
 
 function AddProduct() {
   const { user } = useAuth();
@@ -13,12 +14,48 @@ function AddProduct() {
     image: "",
   });
 
+  const [messageModal, setMessageModal] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    redirectTo: null,
+  });
+
   function handleChange(event) {
     const { name, value } = event.target;
 
     setFormData({
       ...formData,
       [name]: value,
+    });
+  }
+
+  function showMessage(
+    type,
+    title,
+    message,
+    redirectTo = null
+  ) {
+    setMessageModal({
+      show: true,
+      type,
+      title,
+      message,
+      redirectTo,
+    });
+  }function showMessage(
+    type,
+    title,
+    message,
+    redirectTo = null
+  ) {
+    setMessageModal({
+      show: true,
+      type,
+      title,
+      message,
+      redirectTo,
     });
   }
 
@@ -38,20 +75,30 @@ function AddProduct() {
       });
 
       const data = await response.json();
-      
       console.log("ADD PRODUCT RESPONSE:", data);
-
       if (!response.ok) {
-        alert(data.message);
+        showMessage(
+          "error",
+          "Something went wrong",
+          data.message
+        );
         return;
       }
 
-      alert("Product added successfully");
+      showMessage(
+        "success",
+        "Product Added",
+        "This product Added updated successfully.",
+        "/admin/products"
+      );
 
-      navigate("/admin/products");
     } catch (error) {
       console.error("Add product error:", error);
-      alert("Something went wrong");
+      showMessage(
+        "error",
+        "Update Failed",
+        "Something went wrong while updating the product."
+      );
     }
   }
 
@@ -60,10 +107,10 @@ function AddProduct() {
   }
 
   return (
-    <div>
+    <div className="addproduct-page">
       <h1>Add Product</h1>
 
-      <form onSubmit={handleSubmit}>
+      <form className="addproduct-form" onSubmit={handleSubmit}>
         <label>Product Name</label>
         <input
           type="text"
@@ -74,7 +121,7 @@ function AddProduct() {
         />
 
         <label>Price</label>
-        <input
+        <input className="btm-padding"
           type="number"
           name="price"
           value={formData.price}
@@ -100,10 +147,29 @@ function AddProduct() {
           required
         />
 
-        <button type="submit">
+        <button  className="addproduct-btn" type="submit">
           Add Product
         </button>
       </form>
+
+      <MessageModal
+          show={messageModal.show}
+          type={messageModal.type}
+          title={messageModal.title}
+          message={messageModal.message}
+          onClose={() => {
+            const redirectTo = messageModal.redirectTo;
+          
+            setMessageModal({
+              ...messageModal,
+              show: false,
+            });
+          
+            if (redirectTo) {
+              navigate(redirectTo);
+            }
+          }}
+        />
     </div>
   );
 }

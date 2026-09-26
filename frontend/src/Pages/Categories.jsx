@@ -43,40 +43,73 @@ function Categories() {
 
   return (
     <div className="categories-page">
-      <h1>Shop by Category</h1>
-
-      {categories.length === 0 ? (
-        <p>No categories found.</p>
-      ) : (
-        <div className="categories-grid container">
-          {categories.map((category) => (
-            <Link
-              key={category.name}
-              to={`/products?category=${encodeURIComponent(
-                category.name
-              )}`}
-              className="category-card"
-            >
-            <div className="row">
-                <div className="col-md-6">
-                    <h2>{category.name}</h2>
-
-                    <p>
-                    {category.count}{" "}
-                    {category.count === 1
-                        ? "Product"
-                        : "Products"}
-                    </p>
-                </div>
-            </div>
-              
-              <span>View Products →</span>
-            </Link>
-          ))}
-        </div>
-      )}
+      <div className="container">
+        <h1>Shop by Category</h1>
+  
+        {categories.length === 0 ? (
+          <p>No categories found.</p>
+        ) : (
+          <div className="categories-grid">
+            {categories.map((category) => (
+              <Link
+                key={category.name}
+                to={`/products?category=${encodeURIComponent(
+                  category.name
+                )}`}
+                className="category-card"
+              >
+                <h2>{category.name}</h2>
+  
+                <p>
+                  {category.count}{" "}
+                  {category.count === 1
+                    ? "Product"
+                    : "Products"}
+                </p>
+  
+                <button>View Products →</button>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
+
+
+  // return (
+  //   <div className="categories-page">
+  //     <h1>Shop by Category</h1>
+
+  //     {categories.length === 0 ? (
+  //       <p>No categories found.</p>
+  //     ) : (
+  //       <div className="categories-grid container">
+  //         <div className="column">
+  //           {categories.map((category) => (
+  //             <Link
+  //               key={category.name}
+  //               to={`/products?category=${encodeURIComponent(
+  //                 category.name
+  //               )}`}
+  //               className="category-card"
+  //             >
+  //                     <h2>{category.name}</h2>
+  //                   {/* </Link> */}
+  //                     <p>
+  //                     {category.count}{" "}
+  //                     {category.count === 1
+  //                         ? "Product"
+  //                         : "Products"}
+  //                     </p>
+  //               <span>View Products →</span>
+  //             </Link>
+  //           ))} 
+  //         </div>
+  //       </div>
+  //     )}
+  //   </div>
+  // );
 }
 
 export default Categories;

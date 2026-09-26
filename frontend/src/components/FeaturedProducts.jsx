@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useCart } from "../context/CartContext.jsx";
 
-function FeaturedProducts() {
+function FeaturedProducts({
+  handleAddToCart,
+}) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,7 +42,7 @@ function FeaturedProducts() {
 
             <p>{product.category}</p>
 
-            <button onClick={() => addToCart(product)}>
+            <button onClick={() =>handleAddToCart(product)}>
               Add to Cart
             </button>
           </div>

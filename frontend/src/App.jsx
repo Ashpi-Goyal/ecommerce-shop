@@ -16,6 +16,8 @@ import EditProduct from "./Pages/EditProduct.jsx";
 import Footer from "./components/Footer.jsx";
 import AdminOrders from "./Pages/AdminOrders.jsx";
 import Categories from "./Pages/Categories.jsx";
+import AdminRoute from "./components/AdminRoute.jsx";
+import AdminPage from "./Pages/AdminPage.jsx";
 
 function App() {
   return (
@@ -28,6 +30,42 @@ function App() {
 
       <main className="main-content">
         <Routes>
+
+        <Route
+          path="/admin/products"
+          element={
+            <AdminRoute>
+              <AdminProducts />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/products/add"
+          element={
+            <AdminRoute>
+              <AddProduct />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/products/edit/:id"
+          element={
+            <AdminRoute>
+              <EditProduct />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/orders"
+          element={
+            <AdminRoute>
+              <AdminOrders />
+            </AdminRoute>
+          }
+        />
 
           <Route
             path="/"
@@ -99,7 +137,15 @@ function App() {
           element={<Categories/>}
           />
 
+          <Route
+            path="/adminpage"
+            element={
+                <AdminPage />
+            }
+          />
+
         </Routes>
+
       </main>
 
       <Footer/>

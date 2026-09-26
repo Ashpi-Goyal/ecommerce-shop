@@ -1,10 +1,25 @@
-//import Navbar from "../components/Navbar";
-import { Link } from "react-router-dom";
-import CategorySection from "../components/CategorySection";
-import FeaturedProducts from "../components/FeaturedProducts";
-import Cart from "../components/Cart";
+import { useState } from "react";
+import { useCart } from "../context/CartContext.jsx";
+import { useAuth } from "../AuthContext.jsx";
+import AuthRequiredModal from "../components/AuthRequiredModal.jsx";
+import FeaturedProducts from "../components/FeaturedProducts.jsx";
 
 function Home() {
+
+  const { user } = useAuth();
+  const { addToCart } = useCart();
+
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  function handleAddToCart(product) {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+  
+    addToCart(product);
+  }
+
   return (
     <div>
       <section className="hero bg_color">
@@ -19,25 +34,22 @@ function Home() {
             <p>
               Find amazing products at great prices.
             </p>
-  
-            <Link to="/products" className="shop-now-button">
-              Shop Now
-            </Link>
           </div>
   
           <div className="hero-image">
-            <img
-              src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRDPC1fwuX3YXwZ4_VnEymJKK6JtcM5E93yejniAThOLQ&s=10"
-              alt="Shopping"
+            <img src="/images/homepage.jfif" alt="home page" 
             />
           </div>
         </section>
 
-      <CategorySection />
-
-      <FeaturedProducts/>
-
-      <Cart />
+      <FeaturedProducts
+        handleAddToCart={handleAddToCart}
+      />
+      {showAuthModal && (
+        <AuthRequiredModal
+          onClose={() => setShowAuthModal(false)}
+        />
+      )}
       
     </div>
   );

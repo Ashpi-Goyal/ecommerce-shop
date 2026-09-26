@@ -1,14 +1,32 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useCart } from "../context/CartContext.jsx";
+import { useAuth } from "../AuthContext.jsx";
+import AuthRequiredModal from "../components/AuthRequiredModal.jsx";
+
 
 function ProductDetails() {
   const { id } = useParams();
   const { addToCart } = useCart();
 
-
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const { user } = useAuth();
+
+  const [showAuthModal, setShowAuthModal] =
+  useState(false);
+
+  function handleAddToCart(product) {
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    addToCart(product);
+
+    alert(`${product.name} added to cart!`);
+  }
 
   console.log("Product ID from URL:", id);
 
@@ -41,14 +59,6 @@ function ProductDetails() {
     return <h2>Product not found</h2>;
   }
 
-  function handleAddToCart() {
-    console.log("Adding product to cart:", product);
-  
-    addToCart(product);
-  
-    alert(`${product.name} added to cart!`);
-  }
-
   return (
     <div className="product-details">
       <h1>About "{product.name}"</h1>
@@ -64,10 +74,16 @@ function ProductDetails() {
 
         <h3>Type - {product.category}</h3>
 
-        <button onClick={handleAddToCart} className="addcart-btn">
+        <button onClick={() => handleAddToCart(product)} className="addcart-btn">
           Add to Cart
         </button>
       </div>
+
+      {showAuthModal && (
+        <AuthRequiredModal
+          onClose={() => setShowAuthModal(false)}
+        />
+      )}
     </div>
   );
 }

@@ -5,52 +5,83 @@ import {
   useState,
 } from "react";
 
+import { useAuth } from "../AuthContext.jsx";
+
 const CartContext = createContext();
 
 export function CartProvider({ children }) {
-  const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem("cart");
+  const { user } = useAuth();
 
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
+  // Separate cart for every user
+  const cartKey = user
+    ? `cart_${user.id}`
+    : "cart_guest";
 
+  const [cart, setCart] = useState([]);
+
+  // Load the correct cart whenever user changes
   useEffect(() => {
-    localStorage.setItem(
-      "cart",
-      JSON.stringify(cart)
-    );
-  }, [cart]);
+    const savedCart = localStorage.getItem(cartKey);
+
+    if (savedCart) {
+      try {
+        setCart(JSON.parse(savedCart));
+      } catch (error) {
+        console.error("Cart parse error:", error);
+        setCart([]);
+      }
+    } else {
+      setCart([]);
+    }
+  }, [cartKey]);
+
+  // Update React state + localStorage together
+  function updateCart(updateFunction) {
+    setCart((currentCart) => {
+      const newCart =
+        typeof updateFunction === "function"
+          ? updateFunction(currentCart)
+          : updateFunction;
+
+      localStorage.setItem(
+        cartKey,
+        JSON.stringify(newCart)
+      );
+
+      return newCart;
+    });
+  }
 
   function addToCart(product) {
-    const existingProduct = cart.find(
-      (item) => item.id === product.id
-    );
+    updateCart((currentCart) => {
+      const existingProduct = currentCart.find(
+        (item) => item.id === product.id
+      );
 
-    if (existingProduct) {
-      setCart(
-        cart.map((item) =>
+      if (existingProduct) {
+        return currentCart.map((item) =>
           item.id === product.id
             ? {
                 ...item,
                 quantity: item.quantity + 1,
               }
             : item
-        )
-      );
-    } else {
-      setCart([
-        ...cart,
+        );
+      }
+
+      return [
+        ...currentCart,
         {
           ...product,
           quantity: 1,
         },
-      ]);
-    }
+      ];
+    });
   }
 
   function increaseQuantity(id) {
-    setCart(
-      cart.map((item) =>
+    updateCart((currentCart) =>
+      currentCart.map((item) =>
         item.id === id
           ? {
               ...item,
@@ -62,8 +93,8 @@ export function CartProvider({ children }) {
   }
 
   function decreaseQuantity(id) {
-    setCart(
-      cart
+    updateCart((currentCart) =>
+      currentCart
         .map((item) =>
           item.id === id
             ? {
@@ -77,11 +108,15 @@ export function CartProvider({ children }) {
   }
 
   function removeFromCart(id) {
-    setCart(
-      cart.filter(
+    updateCart((currentCart) =>
+      currentCart.filter(
         (item) => item.id !== id
       )
     );
+  }
+
+  function clearCart() {
+    updateCart([]);
   }
 
   const cartTotal = cart.reduce(
@@ -95,10 +130,7 @@ export function CartProvider({ children }) {
       total + item.quantity,
     0
   );
-  function clearCart() {
-    setCart([]);
-  }
-  // PLACE ORDER
+
   function placeOrder(customerDetails) {
     const order = {
       id: "ORD-" + Date.now(),
@@ -113,8 +145,7 @@ export function CartProvider({ children }) {
       JSON.stringify(order)
     );
 
-    // Clear cart
-    setCart([]);
+    clearCart();
 
     return order;
   }
@@ -129,14 +160,12 @@ export function CartProvider({ children }) {
         removeFromCart,
         cartTotal,
         cartCount,
-        placeOrder,
         clearCart,
+        placeOrder,
       }}
     >
       {children}
-      
     </CartContext.Provider>
-    
   );
 }
 

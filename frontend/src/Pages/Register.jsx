@@ -1,13 +1,43 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate, } from "react-router-dom";
+import MessageModal from "../components/MessageModal";
 
 function Register() {
+  const [messageModal, setMessageModal] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+    redirectTo: null,
+  });
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const redirectPath =
+    location.state?.from || "/";
+
     const [formData, setFormData] = useState({
         name: "",
         email: "",
         password: "",
         confirmPassword: "",
     })
+
+    function showMessage(
+      type,
+      title,
+      message,
+      redirectTo = null
+    ) {
+      setMessageModal({
+        show: true,
+        type,
+        title,
+        message,
+        redirectTo,
+      });
+    }
 
     function handleChange(event) {
         const { name, value } = event.target;
@@ -18,11 +48,16 @@ function Register() {
         });
       }
 
-    async function handleSubmit(event) {
+      async function handleSubmit(event) {
         event.preventDefault();
       
         if (formData.password !== formData.confirmPassword) {
-          alert("Passwords do not match");
+          showMessage(
+            "error",
+            "Registration Failed",
+            "Passwords do not match."
+          );
+      
           return;
         }
       
@@ -45,29 +80,40 @@ function Register() {
           const data = await response.json();
       
           if (!response.ok) {
-            alert(data.message);
+            showMessage(
+              "error",
+              "Registration Failed",
+              data.message || "Unable to create account."
+            );
+      
             return;
           }
       
-          alert("Registration successful!");
-      
-          //console.log("REGISTERED USER:", data);
-          //alert(data.message);
-      
+          showMessage(
+            "success",
+            "Registration Successful",
+            "Your account has been created successfully.",
+            "/login"
+          );
         } catch (error) {
           console.error("Registration error:", error);
-          alert("Something went wrong. Please try again.");
+      
+          showMessage(
+            "error",
+            "Registration Error",
+            "Something went wrong. Please try again."
+          );
         }
       }
 
       return (
-        <div className="auth-page">
+        <div className="addproduct-page">
           <div className="auth-card">
             <h1>Create Account</h1>
     
             <p>Register to continue shopping.</p>
     
-            <form onSubmit={handleSubmit}>
+            <form className="addproduct-form login" onSubmit={handleSubmit}>
               <label>Full Name</label>
     
               <input
@@ -112,18 +158,45 @@ function Register() {
                 required
               />
     
-              <button type="submit">
+              <button className="addproduct-btn" type="submit">
                 Register
               </button>
             </form>
     
             <p>
               Already have an account?{" "}
-              <Link to="/login">
+              <Link to="/login" state={{ from: redirectPath,}}>
                 Login
               </Link>
             </p>
           </div>
+
+          <MessageModal
+              show={messageModal.show}
+              type={messageModal.type}
+              title={messageModal.title}
+              message={messageModal.message}
+              onClose={() => {
+                const redirectTo = messageModal.redirectTo;
+
+                setMessageModal({
+                  show: false,
+                  type: "info",
+                  title: "",
+                  message: "",
+                  redirectTo: null,
+                });
+
+                if (redirectTo) {
+                  navigate(redirectTo, {
+                    replace: true,
+                    state: {
+                      from: redirectPath,
+                    },
+                  });
+                }
+              }}
+            />
         </div>
       );
     

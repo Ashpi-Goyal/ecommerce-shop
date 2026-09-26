@@ -18,6 +18,14 @@ let db;
 app.use(cors());
 app.use(express.json());
 
+db.users.createIndex(
+  { email: 1 },
+  { unique: true }
+);
+const normalizedEmail = email
+  .trim()
+  .toLowerCase();
+
 
 // ======================================================
 // JWT AUTHENTICATION
@@ -109,38 +117,52 @@ app.get("/api/products", async (req, res) => {
 // ======================================================
 
 app.post("/api/auth/register", async (req, res) => {
-  const { name, email, password } = req.body;
-
-  if (!name || !email || !password) {
-    return res.status(400).json({
-      message: "All fields are required",
-    });
-  }
-
   try {
-    const usersCollection = db.collection("users");
+    const { name, email, password } = req.body;
 
-    const existingUser = await usersCollection.findOne({
-      email: email,
-    });
-
-    if (existingUser) {
+    // Basic validation
+    if (!name || !email || !password) {
       return res.status(400).json({
-        message: "User already exists",
+        message: "Name, email and password are required",
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const normalizedEmail = email
+      .trim()
+      .toLowerCase();
 
+    // CHECK IF EMAIL ALREADY EXISTS
+    const existingUser = await db
+    .collection("users")
+    .findOne({
+      email: email.trim().toLowerCase(),
+    });
+
+    if (existingUser) {
+      return res.status(409).json({
+        message:
+          "An account with this email already exists. Please login instead.",
+      });
+    }
+
+    // HASH PASSWORD
+    const hashedPassword = await bcrypt.hash(
+      password,
+      10
+    );
+
+    // CREATE USER
     const newUser = {
-      name,
-      email,
+      name: name.trim(),
+      email: normalizedEmail,
       password: hashedPassword,
       isAdmin: false,
       createdAt: new Date(),
     };
 
-    const result = await usersCollection.insertOne(newUser);
+    const result = await db
+      .collection("users")
+      .insertOne(newUser);
 
     res.status(201).json({
       message: "Registration successful",
@@ -155,7 +177,7 @@ app.post("/api/auth/register", async (req, res) => {
     console.error("Registration error:", error);
 
     res.status(500).json({
-      message: "Something went wrong during registration",
+      message: "Server error during registration",
     });
   }
 });
