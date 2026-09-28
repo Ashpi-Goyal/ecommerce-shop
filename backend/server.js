@@ -1,4 +1,11 @@
 require("dotenv").config();
+
+console.log("EMAIL USER:", process.env.EMAIL_USER);
+
+console.log(
+  "EMAIL PASSWORD FOUND:",
+  Boolean(process.env.EMAIL_PASS)
+);
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
@@ -9,23 +16,208 @@ const connectDB = require("./db");
 
 const app = express();
 
-const PORT = 5000;
+//const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
+transporter.verify((error, success) => {
+  if (error) {
+    console.error("EMAIL CONNECTION ERROR:", error);
+  } else {
+    console.log("Email server is ready");
+  }
+});
 
 let db;
 
 app.use(cors());
 app.use(express.json());
+LowerCase();
 
-db.users.createIndex(
-  { email: 1 },
-  { unique: true }
+
+// ======================================================
+// Email Verification
+// ======================================================
+
+app.post("/api/auth/register", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    const normalizedEmail = email
+      .trim()
+      .toLowerCase();
+
+    const existingUser = await db
+      .collection("users")
+      .findOne({
+        email: normalizedEmail,
+      });
+
+    if (existingUser) {
+      return res.status(409).json({
+        message: "Email already registered. Please login.",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(
+      password,
+      10
+    );
+
+    const verificationToken =
+      crypto.randomBytes(32).toString("hex");
+
+    const newUser = {
+      name: name.trim(),
+      email: normalizedEmail,
+      password: hashedPassword,
+      isAdmin: false,
+
+      isEmailVerified: false,
+
+      verificationToken,
+
+      verificationTokenExpires:
+        new Date(Date.now() + 60 * 60 * 1000),
+
+      createdAt: new Date(),
+    };
+
+    await db
+      .collection("users")
+      .insertOne(newUser);
+
+    const verificationLink =
+      `http://localhost:5000/api/auth/verify-email?token=${verificationToken}&email=${encodeURIComponent(normalizedEmail)}`;
+
+      const info = await transporter.sendMail({
+        from: `"Maanya Traders" <${process.env.EMAIL_USER}>`,
+        to: normalizedEmail,
+        subject: "Verify your Maanya Traders account",
+      
+        html: `
+          <h2>Welcome to Maanya Traders</h2>
+      
+          <p>Hello ${newUser.name},</p>
+      
+          <p>Please verify your email address.</p>
+      
+          <a href="${verificationLink}">
+            Verify Email
+          </a>
+      
+          <p>This link expires in 1 hour.</p>
+        `,
+      });
+      
+      console.log("EMAIL SENT RESULT:");
+      console.log("Message ID:", info.messageId);
+      console.log("Accepted:", info.accepted);
+      console.log("Rejected:", info.rejected);
+      console.log("Response:", info.response);
+
+    res.status(201).json({
+      message:
+        "Registration successful. Please check your email and verify your account.",
+    });
+
+  } catch (error) {
+    console.error("Registration error:", error);
+
+    res.status(500).json({
+      message: "Registration failed",
+    });
+  }
+}); 
+
+// Verify API
+
+app.get(
+  "/api/auth/verify-email",
+  async (req, res) => {
+    try {
+      const { token, email } = req.query;
+
+      if (!token || !email) {
+        return res.status(400).send(
+          "Invalid verification link."
+        );
+      }
+
+      const user = await db
+        .collection("users")
+        .findOne({
+          email: email.toLowerCase(),
+          verificationToken: token,
+        });
+
+      if (!user) {
+        return res.status(400).send(
+          "Invalid verification link."
+        );
+      }
+
+      if (
+        user.verificationTokenExpires &&
+        new Date(user.verificationTokenExpires) <
+          new Date()
+      ) {
+        return res.status(400).send(
+          "Verification link has expired."
+        );
+      }
+
+      await db
+        .collection("users")
+        .updateOne(
+          {
+            _id: user._id,
+          },
+          {
+            $set: {
+              isEmailVerified: true,
+            },
+
+            $unset: {
+              verificationToken: "",
+              verificationTokenExpires: "",
+            },
+          }
+        );
+
+      res.send(`
+        <h2>Email Verified Successfully!</h2>
+
+        <p>Your account is now active.</p>
+
+        <a href="http://localhost:5173/login">
+          Go to Login
+        </a>
+      `);
+
+    } catch (error) {
+      console.error(
+        "Email verification error:",
+        error
+      );
+
+      res.status(500).send(
+        "Email verification failed."
+      );
+    }
+  }
 );
-const normalizedEmail = email
-  .trim()
-  .toLowerCase();
-
 
 // ======================================================
 // JWT AUTHENTICATION
@@ -619,29 +811,23 @@ app.put(
 );
 
 
-// ======================================================
-// START SERVER
-// ======================================================
-
 async function startServer() {
   try {
     db = await connectDB();
 
-    console.log(
-      "Database selected:",
-      db.databaseName
+    // Create unique email index after DB connection
+    await db.collection("users").createIndex(
+      { email: 1 },
+      { unique: true }
     );
 
+    console.log("Unique email index ready");
+
     app.listen(PORT, () => {
-      console.log(
-        `Server running on port ${PORT}`
-      );
+      console.log(`Server running on port ${PORT}`);
     });
   } catch (error) {
-    console.error(
-      "Failed to start server:",
-      error
-    );
+    console.error("Server startup error:", error);
   }
 }
 

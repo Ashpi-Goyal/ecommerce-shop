@@ -4,6 +4,7 @@ import { useCart } from "../context/CartContext.jsx";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../AuthContext.jsx";
 import AuthRequiredModal from "../components/AuthRequiredModal.jsx";
+import MessageModal from "../components/MessageModal.jsx";
 
 
 function Products() {
@@ -18,6 +19,13 @@ function Products() {
   const [selectedCategory, setSelectedCategory] = useState(
     categoryFromUrl || "All"
   );
+
+  const [messageModal, setMessageModal] = useState({
+    show: false,
+    type: "info",
+    title: "",
+    message: "",
+  });
   
   const { user } = useAuth();
 
@@ -30,6 +38,12 @@ function Products() {
     }
   
     addToCart(product);
+    setMessageModal({
+      show: true,
+      type: "success",
+      title: "Added to Cart",
+      message: `${product.name} was added to your cart successfully.`,
+    });
   }
 
   useEffect(() => {
@@ -281,6 +295,21 @@ function Products() {
           onClose={() => setShowAuthModal(false)}
         />
       )}
+
+        <MessageModal
+          show={messageModal.show}
+          type={messageModal.type}
+          title={messageModal.title}
+          message={messageModal.message}
+          onClose={() =>
+            setMessageModal({
+              show: false,
+              type: "info",
+              title: "",
+              message: "",
+            })
+          }
+        />
 
       </div>
     );

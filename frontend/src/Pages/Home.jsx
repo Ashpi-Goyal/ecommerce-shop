@@ -23,6 +23,13 @@ function Home() {
   return (
     <div>
       <section className="hero bg_color">
+        {/* <div className="container">
+          <div className="column">
+            <div className="banner-img-sec">
+            
+            </div>
+          </div>
+        </div> */}
           <div className="hero-content">
   
             <h1>
@@ -37,7 +44,7 @@ function Home() {
           </div>
   
           <div className="hero-image">
-            <img src="/images/homepage.jfif" alt="home page" 
+            <img src="/images/Banners Image/banner-img.jfif" alt="home page" 
             />
           </div>
         </section>
